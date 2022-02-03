@@ -2,17 +2,17 @@
 /* eslint-disable no-unused-vars */
 import React, { Dispatch, SetStateAction, useState, useMemo, useEffect } from "react";
 import "./styles.css";
+import OreId from "oreid-js/dist/oreId";
 import {
   AccountType,
   AuthProvider,
   OreIdProvider,
-  OreId,
   User,
   OreIdOptions,
   SignOptions,
   NewAccountOptions,
   GetOreIdRecoverAccountUrlParams,
-} from "oreid-js";
+} from "oreid-js/dist/models";
 import { DappAction, WebWidgetProps } from "oreid-js/dist/webwidget/models";
 import OreIdWebWidget from "oreid-react-web-widget";
 import LoginButton from "oreid-login-button";
