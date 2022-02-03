@@ -18,7 +18,7 @@ import OreIdWebWidget from "oreid-react-web-widget";
 import LoginButton from "oreid-login-button";
 import { makeStyles } from "@material-ui/core/styles";
 import { ButtonGroup, Snackbar } from "@material-ui/core";
-import Alert, { Color } from "@material-ui/lab/Alert";
+import { Alert, Color } from "@material-ui/lab";
 import algoSignerProvider from "eos-transit-algosigner-provider";
 import keycatProvider from "eos-transit-keycat-provider";
 import ledgerProvider from "eos-transit-ledger-provider";
@@ -31,8 +31,6 @@ import tokenpocketProvider from "eos-transit-tokenpocket-provider";
 import web3Provider from "eos-transit-web3-provider";
 import { encode as base64Encode } from "base-64";
 import UserOreId from "./UserOreId";
-
-const oreIdCallbackUrl = `${window.location.origin}/oreidcallback`;
 
 /** @type {Object.<string, Color>} */
 const Severity = {
@@ -51,8 +49,16 @@ const Severity = {
  * }} Logs
  */
 
+const oreIdCallbackUrl = `${window.location.origin}/oreidcallback`;
+
+const oreIdUrl = {
+  app: 'https://dev.oreid.io',
+  auth: 'https://dev.service.oreid.io',
+}
+
 /** @type OreIdOptions  */
 const myOreIdOptions = {
+  oreIdUrl: oreIdUrl.auth,
   appId: "demo_0097ed83e0a54e679ca46d082ee0e33a",
   authCallbackUrl: oreIdCallbackUrl,
   signCallbackUrl: oreIdCallbackUrl,
@@ -319,6 +325,7 @@ export default function App() {
             <>
               <UserOreId
                 appId={myOreIdOptions.appId}
+                oreIdAppUrl={oreIdUrl.app}
                 userInfo={userInfo}
                 onAction={handleAction}
                 onLogout={handleLogout}
