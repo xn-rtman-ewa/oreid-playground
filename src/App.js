@@ -281,6 +281,7 @@ export default function App() {
       !oreId.accessToken && setIsLoggedIn(false);
     });
     try {
+      // eslint-disable-next-line no-unused-expressions
       window.parent.document;
     } catch (error) {
       setLogs({
