@@ -278,6 +278,7 @@ export default function App() {
       handleOreIdCallback();
       !oreId.accessToken && setIsLoggedIn(false);
     });
+    setLogs({ [Severity.Warning]: <>Open sandbox browser in <a target="_blank" href="https://c2i5r.csb.app" rel="noreferrer">New Window</a> to avoid callback errors</> });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
