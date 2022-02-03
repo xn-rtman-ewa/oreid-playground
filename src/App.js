@@ -1,6 +1,12 @@
 // @ts-check
 /* eslint-disable no-unused-vars */
-import React, { Dispatch, SetStateAction, useState, useMemo, useEffect } from "react";
+import React, {
+  Dispatch,
+  SetStateAction,
+  useState,
+  useMemo,
+  useEffect
+} from "react";
 import "./styles.css";
 import OreId from "oreid-js/dist/oreId";
 import {
@@ -11,7 +17,7 @@ import {
   OreIdOptions,
   SignOptions,
   NewAccountOptions,
-  GetOreIdRecoverAccountUrlParams,
+  GetOreIdRecoverAccountUrlParams
 } from "oreid-js/dist/models";
 import { DappAction, WebWidgetProps } from "oreid-js/dist/webwidget/models";
 import OreIdWebWidget from "oreid-react-web-widget";
@@ -37,7 +43,7 @@ const Severity = {
   Info: "info",
   Warning: "warning",
   Success: "success",
-  Error: "error",
+  Error: "error"
 };
 
 /**
@@ -52,9 +58,9 @@ const Severity = {
 const oreIdCallbackUrl = `${window.location.origin}/oreidcallback`;
 
 const oreIdUrl = {
-  app: 'https://dev.oreid.io',
-  auth: 'https://dev.service.oreid.io',
-}
+  app: "https://dev.oreid.io",
+  auth: "https://dev.service.oreid.io"
+};
 
 /** @type OreIdOptions  */
 const myOreIdOptions = {
@@ -74,8 +80,8 @@ const myOreIdOptions = {
     simpleosProvider(),
     tokenpocketProvider(),
     // @ts-ignore
-    web3Provider(),
-  ],
+    web3Provider()
+  ]
 };
 
 const useStyles = makeStyles((theme) => ({
@@ -87,7 +93,7 @@ const useStyles = makeStyles((theme) => ({
     justifyContent: "center",
     alignItems: "center",
     paddingTop: theme.spacing(4),
-    paddingBottom: theme.spacing(4),
+    paddingBottom: theme.spacing(4)
   },
   buttons: {
     display: "grid",
@@ -95,9 +101,9 @@ const useStyles = makeStyles((theme) => ({
     gridTemplateRows: "50px 50px 50px 50px",
     gridGap: theme.spacing(2),
     "& button:hover": {
-      cursor: "pointer",
-    },
-  },
+      cursor: "pointer"
+    }
+  }
 }));
 
 export default function App() {
@@ -144,7 +150,11 @@ export default function App() {
       setUserInfo(Object.freeze(userInfo));
       setIsLoggedIn(true);
       // Save the provider to send in test flows
-      setLoggedProvider(oreId.accessTokenHelper?.decodedToken["https://oreid.aikon.com/provider"]);
+      setLoggedProvider(
+        oreId.accessTokenHelper?.decodedToken[
+          "https://oreid.aikon.com/provider"
+        ]
+      );
       return;
     }
     setUserInfo(null);
@@ -191,7 +201,7 @@ export default function App() {
         provider: walletType,
         chainNetwork,
         string: "Verify your Account",
-        message: "",
+        message: ""
       });
       console.log({ signedString });
       setTimeout(() => {
@@ -211,10 +221,16 @@ export default function App() {
     switch (action) {
       case DappAction.Sign:
         if (!args?.selectedChainAccountPermission) {
-          setLogs({ [Severity.Error]: "Please select a Permission to use for Action" });
+          setLogs({
+            [Severity.Error]: "Please select a Permission to use for Action"
+          });
           return;
         }
-        const { chainAccount, chainNetwork, privateKeyStoredExterally } = args.chainAccountPermission;
+        const {
+          chainAccount,
+          chainNetwork,
+          privateKeyStoredExterally
+        } = args.chainAccountPermission;
         /** @type {{name: DappAction.Sign, params: SignOptions}} */
         const signActionProps = {
           name: DappAction.Sign,
@@ -227,8 +243,8 @@ export default function App() {
             state: "yourstate", // anything you'd like to remember after the callback
             transaction: base64Encode(args?.transaction),
             returnSignedTransaction: false,
-            preventAutoSign: true, // prevent auto sign even if transaction is auto signable
-          },
+            preventAutoSign: true // prevent auto sign even if transaction is auto signable
+          }
         };
         return signActionProps;
       case DappAction.NewAccount:
@@ -241,8 +257,8 @@ export default function App() {
             account: userInfo?.accountName,
             chainNetwork: args?.chainNetwork,
             accountType: AccountType.Native,
-            provider: loggedProvider,
-          },
+            provider: loggedProvider
+          }
         };
         return newAccountActionProps;
       case DappAction.RecoverAccount:
@@ -251,8 +267,8 @@ export default function App() {
           name: DappAction.RecoverAccount,
           params: {
             account: userInfo?.accountName,
-            provider: loggedProvider,
-          },
+            provider: loggedProvider
+          }
         };
         return recoverAccountActionProps;
       default:
@@ -278,7 +294,22 @@ export default function App() {
       handleOreIdCallback();
       !oreId.accessToken && setIsLoggedIn(false);
     });
-    setLogs({ [Severity.Warning]: <>Open sandbox browser in <a target="_blank" href="https://c2i5r.csb.app" rel="noreferrer">New Window</a> to avoid callback errors</> });
+    try {
+      window.parent.document;
+    } catch (error) {
+      console.log("rttot");
+      setLogs({
+        [Severity.Warning]: (
+          <>
+            Open sandbox browser in{" "}
+            <a target="_blank" href="https://bmisb.csb.app" rel="noreferrer">
+              New Window
+            </a>{" "}
+            to avoid callback errors
+          </>
+        )
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -287,7 +318,8 @@ export default function App() {
     else if (logs.warning) setSeverity(Severity.Warning);
     if (logs.success) setSeverity(Severity.Success);
     else if (logs.error) setSeverity(Severity.Error);
-    if (logs?.info || logs?.error || logs?.warning || logs?.success) setOpenSnackbar(true);
+    if (logs?.info || logs?.error || logs?.warning || logs?.success)
+      setOpenSnackbar(true);
   }, [logs.error, logs.success, logs.warning, logs.info]);
 
   /** @type WebWidgetProps['onSuccess'] */
@@ -299,7 +331,11 @@ export default function App() {
         setLogs({ [Severity.Success]: "Signed Transaction Successfully!" });
         break;
       case DappAction.NewAccount:
-        setLogs({ [Severity.Success]: `New Account ${result?.data["chain_account"] || ""} Created Successfully!` });
+        setLogs({
+          [Severity.Success]: `New Account ${
+            result?.data["chain_account"] || ""
+          } Created Successfully!`
+        });
         break;
       case DappAction.RecoverAccount:
         setLogs({ [Severity.Success]: "Recovered Password Successfully!" });
@@ -335,7 +371,7 @@ export default function App() {
               <OreIdWebWidget
                 oreIdOptions={{
                   ...myOreIdOptions,
-                  accessToken: oreId?.accessToken,
+                  accessToken: oreId?.accessToken
                 }}
                 show={showWidget}
                 action={widgetAction}
@@ -348,13 +384,18 @@ export default function App() {
             <ButtonGroup className={styles.buttons}>
               {/* Supported Login Options */}
               {Object.keys(OreIdProvider)
-                .filter((oreIdProvider) => OreIdProvider[oreIdProvider] !== OreIdProvider.Custodial)
+                .filter(
+                  (oreIdProvider) =>
+                    OreIdProvider[oreIdProvider] !== OreIdProvider.Custodial
+                )
                 .map((oreIdProvider) => (
                   // @ts-ignore
                   <LoginButton
                     key={oreIdProvider}
                     provider={OreIdProvider[oreIdProvider]}
-                    onClick={(e) => handleLogin(e, OreIdProvider[oreIdProvider])}
+                    onClick={(e) =>
+                      handleLogin(e, OreIdProvider[oreIdProvider])
+                    }
                   />
                 ))}
             </ButtonGroup>
@@ -364,7 +405,7 @@ export default function App() {
       <Snackbar
         anchorOrigin={{
           vertical: "bottom",
-          horizontal: "right",
+          horizontal: "right"
         }}
         open={openSnackbar}
         autoHideDuration={6000}
