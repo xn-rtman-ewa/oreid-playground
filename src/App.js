@@ -297,7 +297,6 @@ export default function App() {
     try {
       window.parent.document;
     } catch (error) {
-      console.log("rttot");
       setLogs({
         [Severity.Warning]: (
           <>
