@@ -1,6 +1,7 @@
 // @ts-check
 /* eslint-disable no-unused-vars */
 import React, { Dispatch, SetStateAction, useState, useMemo, useEffect } from "react";
+import "./styles.css";
 import {
   AccountType,
   AuthProvider,
