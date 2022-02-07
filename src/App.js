@@ -184,7 +184,7 @@ export default function App() {
     }
   };
 
-  const handleSignString = async ({ chainNetwork, walletType }) => {
+  const handleSignString = async ({ chainNetwork, walletType, onSuccess }) => {
     try {
       const { signedString } = await oreId.signString({
         account: userInfo?.accountName,
@@ -199,6 +199,7 @@ export default function App() {
       }, 2000);
       if (signedString) {
         setLogs({ [Severity.Success]: "Account Added Successfully!" });
+        onSuccess();
       }
     } catch (error) {
       console.error(error);
@@ -264,10 +265,6 @@ export default function App() {
 
   /** Set widget properties for selected action */
   const handleAction = async (action, args) => {
-    if (action === "signString") {
-      handleSignString(args);
-      return;
-    }
     const widgetActionProps = composeWidgetOptionsForAction(action, args);
     setWidgetAction(widgetActionProps);
     setShowWidget(!!widgetActionProps);
@@ -348,6 +345,7 @@ export default function App() {
                 oreIdAppUrl={oreIdUrl.app}
                 userInfo={userInfo}
                 onAction={handleAction}
+                onConnectWallet={handleSignString}
                 onLogout={handleLogout}
                 onRefresh={() => loadUserFromApi(userInfo?.accountName)}
               />
