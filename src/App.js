@@ -91,11 +91,16 @@ const useStyles = makeStyles((theme) => ({
   },
   buttons: {
     display: "grid",
-    gridTemplateColumns: "225px 225px 225px",
-    gridTemplateRows: "50px 50px 50px 50px",
+    gridTemplateColumns: "repeat(3, 225px)",
     gridGap: theme.spacing(2),
     "& button:hover": {
       cursor: "pointer",
+    },
+    [theme.breakpoints.down("sm")]: {
+      gridTemplateColumns: "repeat(2, 225px)",
+    },
+    [theme.breakpoints.down("xs")]: {
+      gridTemplateColumns: "225px",
     },
   },
 }));
