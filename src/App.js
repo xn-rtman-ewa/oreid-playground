@@ -15,7 +15,7 @@ import {
 } from "oreid-js/dist/models";
 import { DappAction, WebWidgetProps } from "oreid-js/dist/webwidget/models";
 import OreIdWebWidget from "oreid-react-web-widget";
-import LoginButton from "oreid-login-button";
+import OreIdLoginButton from "oreid-login-button";
 import { makeStyles } from "@material-ui/core/styles";
 import { ButtonGroup, Snackbar } from "@material-ui/core";
 import { Alert, Color } from "@material-ui/lab";
@@ -373,11 +373,7 @@ export default function App() {
                 .filter((oreIdProvider) => OreIdProvider[oreIdProvider] !== OreIdProvider.Custodial)
                 .map((oreIdProvider) => (
                   // @ts-ignore
-                  <LoginButton
-                    key={oreIdProvider}
-                    provider={OreIdProvider[oreIdProvider]}
-                    onClick={(e) => handleLogin(e, OreIdProvider[oreIdProvider])}
-                  />
+                  <OreIdLoginButton key={oreIdProvider} provider={OreIdProvider[oreIdProvider]} onClick={(e, provider) => handleLogin(provider)} />
                 ))}
             </ButtonGroup>
           )}
