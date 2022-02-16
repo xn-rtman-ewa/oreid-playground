@@ -372,7 +372,6 @@ export default function App() {
               {Object.keys(OreIdProvider)
                 .filter((oreIdProvider) => OreIdProvider[oreIdProvider] !== OreIdProvider.Custodial)
                 .map((oreIdProvider) => (
-                  // @ts-ignore
                   <OreIdLoginButton key={oreIdProvider} provider={OreIdProvider[oreIdProvider]} onClick={(e, provider) => handleLogin(provider)} />
                 ))}
             </ButtonGroup>
