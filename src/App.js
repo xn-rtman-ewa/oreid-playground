@@ -307,7 +307,7 @@ export default function App() {
     if (logs.success) setSeverity(Severity.Success);
     else if (logs.error) setSeverity(Severity.Error);
     if (logs?.info || logs?.error || logs?.warning || logs?.success) setOpenSnackbar(true);
-  }, [logs.error, logs.success, logs.warning, logs.info]);
+  }, [logs]);
 
   /** @type WebWidgetProps['onSuccess'] */
   const handleWidgetSuccess = (result) => {
