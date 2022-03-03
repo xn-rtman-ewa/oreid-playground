@@ -137,8 +137,7 @@ export default function App() {
 
   /** Call oreId.login() - this returns a redirect url which will launch the login flow (for the specified provider)
    When complete, the browser will be redirected to the authCallbackUrl (specified in oredId options) */
-  const handleLogin = async (event, provider) => {
-    event.preventDefault();
+  const handleLogin = async (provider) => {
     const response = await oreId.login({ provider });
     // redirect browser to loginURL to start the login flow
     if (response?.loginUrl) window.location.href = response.loginUrl;
