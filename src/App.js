@@ -133,7 +133,6 @@ export default function App() {
     oreIdWebwidget.onAuth({
       params: { provider },
       onSuccess: (userInfo) => {
-        window.alert('sc')
         handleUserInfo(userInfo)
         setLogs({ [Severity.Success]: "Logged In Successfully!" })
       },
