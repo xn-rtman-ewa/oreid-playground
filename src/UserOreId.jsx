@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { makeStyles } from "@material-ui/core/styles";
-import { DappAction } from "oreid-js/dist/webwidget/models";
-import { ChainNetwork, ExternalWalletType } from "oreid-js/dist/models";
+import { ChainNetwork, ExternalWalletType, WebWidgetAction } from "oreid-js/dist/models";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import ExitToAppIcon from "@material-ui/icons/ExitToApp";
 import AccountBalanceWalletIcon from "@material-ui/icons/AccountBalanceWallet";
@@ -139,13 +138,13 @@ const UserOreId = (props) => {
   const handleSelectChainAccountNetwork = (event) => {
     event.preventDefault();
     setOpenDialog(false);
-    onAction(DappAction.NewAccount, { chainNetwork });
+    onAction(WebWidgetAction.NewChainAccount, { chainNetwork });
   };
 
   const handleSelectPermission = (event) => {
     event.preventDefault();
     setOpenDialog(false);
-    onAction(DappAction.Sign, { chainAccountPermission: userInfo?.permissions[selectedPermission], transaction });
+    onAction(WebWidgetAction.Sign, { chainAccountPermission: userInfo?.permissions[selectedPermission], transaction });
   };
 
   const handleConnectWallet = (event) => {
@@ -156,11 +155,11 @@ const UserOreId = (props) => {
   const handleSelectAction = (event) => {
     const action = event.target.value;
     switch (action) {
-      case DappAction.Sign:
+      case WebWidgetAction.Sign:
         setDialogTitle(FormTitle.ChoosePermission);
         setOpenDialog(true);
         return;
-      case DappAction.NewAccount:
+      case WebWidgetAction.NewChainAccount:
         setDialogTitle(FormTitle.ChooseChainNetwork);
         setOpenDialog(true);
         return;
@@ -277,7 +276,7 @@ const UserOreId = (props) => {
                       <MenuItem value="">
                         <em>None</em>
                       </MenuItem>
-                      {userInfo.permissions.map((permission, index) => (
+                      {permissions.map((permission, index) => (
                         <MenuItem key={index} value={index}>
                           {permission.permission} ({permission.chainNetwork})
                         </MenuItem>
@@ -344,7 +343,7 @@ const UserOreId = (props) => {
       <CardContent>
         <Accordion>
           <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1a-content" id="panel1a-header">
-            <Typography className={styles.permissions}>Permissions</Typography>
+            <Typography className={styles.permissions}>Chain Account Permissions</Typography>
           </AccordionSummary>
           <AccordionDetails>
             <TableContainer>
@@ -357,12 +356,12 @@ const UserOreId = (props) => {
                     <TableCell>External Wallet</TableCell>
                     <TableCell>Verified</TableCell>
                     <TableCell>External Private Key</TableCell>
-                    <TableCell>Chain Account</TableCell>
+                    <TableCell>Account</TableCell>
                     <TableCell>Public Key</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {permissions.map((permission, index) => (
+                  {permissions?.map((permission, index) => (
                     <TableRow className={styles.tableRow} key={index}>
                       <TableCell component="th" scope="row">
                         {permission.permission || ""}
@@ -395,9 +394,9 @@ const UserOreId = (props) => {
             <MenuItem value="">
               <em>None</em>
             </MenuItem>
-            <MenuItem value={DappAction.Sign}>Sign</MenuItem>
-            <MenuItem value={DappAction.NewAccount}>New Account</MenuItem>
-            <MenuItem value={DappAction.RecoverAccount}>Recover Account (Reset Password/Pin)</MenuItem>
+            <MenuItem value={WebWidgetAction.Sign}>Sign</MenuItem>
+            <MenuItem value={WebWidgetAction.NewChainAccount}>New Chain Account</MenuItem>
+            <MenuItem value={WebWidgetAction.RecoverAccount}>Recover Account (Reset Password/Pin)</MenuItem>
           </Select>
         </FormControl>
         <Button endIcon={<ExitToAppIcon />} className={styles.logout} onClick={onLogout} variant="outlined" color="secondary">
