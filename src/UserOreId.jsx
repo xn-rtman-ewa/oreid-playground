@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { makeStyles } from "@material-ui/core/styles";
-import { ChainNetwork, ExternalWalletType, WebWidgetAction } from "oreid-js/dist/models";
+import { ChainNetwork, ExternalWalletType, WebWidgetAction } from "oreid-js";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import ExitToAppIcon from "@material-ui/icons/ExitToApp";
 import AccountBalanceWalletIcon from "@material-ui/icons/AccountBalanceWallet";
 import RefreshIcon from "@material-ui/icons/Refresh";
+import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
 import {
   Avatar,
   Card,
@@ -35,6 +37,8 @@ import {
   Button,
   Tooltip,
   Chip,
+  Collapse,
+  Box,
 } from "@material-ui/core";
 import transactionTemplate from "./transactionTemplate.json";
 import { ReactComponent as OREIDBadge } from "./oreid-badge.svg";
@@ -109,6 +113,13 @@ const useStyles = makeStyles((theme) => ({
       color: theme.palette.common.white,
     },
   },
+  tableSubHeadRow: {
+    whiteSpace: "nowrap",
+    backgroundColor: theme.palette.text.secondary,
+    "& th": {
+      color: theme.palette.common.white,
+    },
+  },
   cardActions: {
     padding: theme.spacing(2),
     gap: theme.spacing(4),
@@ -124,16 +135,19 @@ const useStyles = makeStyles((theme) => ({
 /** Show user info and options (after logging in )*/
 const UserOreId = (props) => {
   const { userInfo, onAction, onConnectWallet, onLogout, onRefresh, appId, oreIdAppUrl } = props;
-  const { accountName, email, name, picture, permissions, username } = userInfo;
+  const { accountName, email, name, picture, chainAccounts, username } = userInfo;
 
-  const [selectedPermission, setSelectedPermission] = useState("");
+  const [selectedPermission, setSelectedPermission] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [dialogTitle, setDialogTitle] = useState("");
   const [chainNetwork, setChainNetwork] = useState(null);
   const [walletType, setWalletType] = useState(null);
   const [transaction, setTransaction] = useState(JSON.stringify(transactionTemplate, null, 4));
+  const [openRow, setOpenRow] = React.useState(Array(userInfo.chainAccounts.length).fill(false));
 
   const styles = useStyles();
+
+  const chainAccountsPermissions = userInfo.chainAccounts.reduce((chainAccountsPermissions, chainAccount) => chainAccountsPermissions.concat([...chainAccount.permissions.map(chainAccountsPermission => ({...chainAccountsPermission, chainAccount: chainAccount.chainAccount}))]), [])
 
   const handleSelectChainAccountNetwork = (event) => {
     event.preventDefault();
@@ -144,7 +158,7 @@ const UserOreId = (props) => {
   const handleSelectPermission = (event) => {
     event.preventDefault();
     setOpenDialog(false);
-    onAction(WebWidgetAction.Sign, { chainAccountPermission: userInfo?.permissions[selectedPermission], transaction });
+    onAction(WebWidgetAction.Sign, { chainAccountPermission: userInfo?.chainAccounts.permissions[selectedPermission], transaction });
   };
 
   const handleConnectWallet = (event) => {
@@ -177,7 +191,7 @@ const UserOreId = (props) => {
           <Chip
             className={styles.dappPill}
             label={appId}
-            onClick={() => window.open(`${oreIdAppUrl}/app/${appId}`, "_blank").focus()}
+            onClick={() => window.open(`${oreIdAppUrl || 'https://oreid.io'}/app/${appId}`, "_blank").focus()}
             color="primary"
             avatar={<Avatar aria-label={name}>{name[0].toUpperCase()}</Avatar>}
             variant="outlined"
@@ -264,25 +278,41 @@ const UserOreId = (props) => {
                   <FormControl color="primary" margin="dense" variant="outlined">
                     <InputLabel id="select-permission">Permission</InputLabel>
                     <Select
+                      label="Permission"
                       labelId="select-permission"
                       id="select-permission"
-                      value={selectedPermission}
+                      value={selectedPermission || ''}
                       onChange={(e) => {
                         setSelectedPermission(e.target.value);
                         setTransaction(JSON.stringify(transactionTemplate, null, 4));
                       }}
-                      label="Permission"
                     >
                       <MenuItem value="">
                         <em>None</em>
                       </MenuItem>
-                      {permissions.map((permission, index) => (
-                        <MenuItem key={index} value={index}>
-                          {permission.permission} ({permission.chainNetwork})
+                      {chainAccountsPermissions.map((chainAccountPermission, i) => (
+                        <MenuItem key={i} value={i}>
+                          {chainAccountPermission.name}{' '}
+                            {chainAccountPermission.publicKey && (
+                              <>
+                                ({chainAccountPermission.publicKey?.slice(0, 7)}{chainAccountPermission.publicKey?.length > 7 ? '...' : ''})
+                              </>
+                            )}
                         </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
+                  {selectedPermission !== null && (
+                    <FormControl color="primary" margin="dense" variant="outlined">
+                      <TextField
+                        margin="dense"
+                        label="Chain Account Address"
+                        variant="outlined"
+                        color="secondary"
+                        value={chainAccountsPermissions[selectedPermission].chainAccount}
+                      />
+                    </FormControl>
+                  )}
                   <FormControl color="secondary" margin="dense" variant="outlined">
                     <TextField
                       multiline
@@ -290,9 +320,7 @@ const UserOreId = (props) => {
                       variant="outlined"
                       color="secondary"
                       rows="5"
-                      value={transaction
-                        .replace(/\$actor/g, userInfo?.permissions[selectedPermission]?.chainAccount || "")
-                        .replace(/\$permission/g, userInfo?.permissions[selectedPermission]?.permission || "")}
+                      value={transaction}
                       onChange={(e) => setTransaction(e.currentTarget.value)}
                     />
                   </FormControl>
@@ -343,41 +371,86 @@ const UserOreId = (props) => {
       <CardContent>
         <Accordion>
           <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1a-content" id="panel1a-header">
-            <Typography className={styles.permissions}>Chain Account Permissions</Typography>
+            <Typography className={styles.permissions}>Chain Accounts</Typography>
           </AccordionSummary>
           <AccordionDetails>
             <TableContainer>
               <Table className={styles.table} aria-label="permissions table">
                 <TableHead>
                   <TableRow className={styles.tableHeadRow}>
-                    <TableCell>Name</TableCell>
-                    <TableCell>Account Type</TableCell>
+                    <TableCell />
+                    <TableCell>Address</TableCell>
                     <TableCell>Chain Network</TableCell>
-                    <TableCell>External Wallet</TableCell>
+                    <TableCell>Default Permission Name</TableCell>
+                    <TableCell>Account Type</TableCell>
                     <TableCell>Verified</TableCell>
+                    <TableCell>External Wallet</TableCell>
                     <TableCell>External Private Key</TableCell>
-                    <TableCell>Account</TableCell>
                     <TableCell>Public Key</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {permissions?.map((permission, index) => (
-                    <TableRow className={styles.tableRow} key={index}>
-                      <TableCell component="th" scope="row">
-                        {permission.permission || ""}
-                      </TableCell>
-                      <TableCell>{permission.accountType || ""}</TableCell>
-                      <TableCell>{permission.chainNetwork || ""}</TableCell>
-                      <TableCell>{permission.externalWalletType || ""}</TableCell>
+                  {chainAccounts?.map((chainAccount, i) => (
+                  <>
+                    <TableRow >
+                      <TableCell><IconButton aria-label="expand row" size="small" onClick={() => setOpenRow(openRow => ({...openRow, [i]: !openRow[i]}))}>
+                        {openRow[i] ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                      </IconButton></TableCell>
+                      <TableCell component="th" scope="row">{chainAccount.chainAccount}</TableCell>
+                      <TableCell component="th" scope="row">{chainAccount.chainNetwork}</TableCell>
+                      <TableCell align="center">{chainAccount.defaultPermission.name}</TableCell>
+                      <TableCell align="center">{chainAccount.defaultPermission.accountType}</TableCell>
                       <TableCell align="center" padding="checkbox">
-                        <Checkbox disabled checked={permission.isVerified || false} />
+                        <Checkbox disabled checked={chainAccount.defaultPermission.isVerified || false} />
                       </TableCell>
+                      <TableCell align="center">{chainAccount.defaultPermission.externalWalletType}</TableCell>
                       <TableCell align="center" padding="checkbox">
-                        <Checkbox disabled checked={permission.privateKeyStoredExterally || false} />
+                        <Checkbox disabled checked={chainAccount.defaultPermission.privateKeyStoredExterally || false} />
                       </TableCell>
-                      <TableCell>{permission.chainAccount || ""}</TableCell>
-                      <TableCell>{permission.publicKey || ""}</TableCell>
+                      <TableCell align="left">{chainAccount.defaultPermission.publicKey}</TableCell>
                     </TableRow>
+                    <TableRow>
+                      <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+                        <Collapse in={openRow[i]} timeout="auto" unmountOnExit>
+                          <Box margin={1}>
+                            <Typography variant="h6" gutterBottom component="div">
+                              Permissions
+                            </Typography>
+                            <Table size="small" aria-label="purchases">
+                              <TableHead>
+                                <TableRow className={styles.tableSubHeadRow}>
+                                  <TableCell>Name</TableCell>
+                                  <TableCell>Account Type</TableCell>
+                                  <TableCell>Verified</TableCell>
+                                  <TableCell>External Wallet</TableCell>
+                                  <TableCell>External Private Key</TableCell>
+                                  <TableCell>Public Key</TableCell>
+                                </TableRow>
+                              </TableHead>
+                              <TableBody>
+                                {chainAccount.permissions.map((chainAccountPermission, j) => (
+                                  <TableRow key={`${i}-${j}`}>
+                                    <TableCell component="th" scope="row">
+                                      {chainAccountPermission.name || ''}
+                                    </TableCell>
+                                    <TableCell align="center">{chainAccountPermission.accountType}</TableCell>
+                                    <TableCell align="center" padding="checkbox">
+                                      <Checkbox disabled checked={chainAccountPermission.isVerified || false} />
+                                    </TableCell>
+                                    <TableCell align="center">{chainAccountPermission.externalWalletType}</TableCell>
+                                    <TableCell align="center" padding="checkbox">
+                                      <Checkbox disabled checked={chainAccountPermission.privateKeyStoredExterally || false} />
+                                    </TableCell>
+                                    <TableCell align="left">{chainAccountPermission.publicKey}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </Box>
+                        </Collapse>
+                      </TableCell>
+                    </TableRow>
+                  </>
                   ))}
                 </TableBody>
               </Table>

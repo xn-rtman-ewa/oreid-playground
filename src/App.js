@@ -1,17 +1,15 @@
 // @ts-check
 /* eslint-disable no-unused-vars */
-import React, { Dispatch, SetStateAction, useState, useMemo, useEffect } from "react";
+import React, { Dispatch, SetStateAction, useCallback, useState, useMemo, useEffect } from "react";
 import "./styles.css";
-import OreId from "oreid-js/dist/core/oreId";
 import {
+  OreId,
   AuthProvider,
   LoginProvider,
-  OreIdOptions,
   TransactionData,
-  UserSourceData,
   WebWidgetAction,
-} from "oreid-js/dist/models";
-import { createOreIdWebWidget, OreIdWebWidget, OnError } from "oreid-webwidget";
+ } from "oreid-js";
+import { WebPopup } from 'oreid-webpopup'
 import OreIdLoginButton from "oreid-login-button";
 import { makeStyles } from "@material-ui/core/styles";
 import { ButtonGroup, Snackbar } from "@material-ui/core";
@@ -47,14 +45,15 @@ const Severity = {
 
 const oreIdCallbackUrl = `${window.location.origin}/oreidcallback`;
 
+// optional
 const oreIdUrl = {
-  app: "https://staging.oreid.io",
-  auth: "https://staging.service.oreid.io",
+  app: "https://oreid.io",
+  auth: "https:/service.oreid.io",
 };
 
-/** @type OreIdOptions  */
+/** @type import('oreid-js').OreIdOptions  */
 const myOreIdOptions = {
-  oreIdUrl: oreIdUrl.auth,
+  oreIdUrl: oreIdUrl?.auth,
   appId: "demo_0097ed83e0a54e679ca46d082ee0e33a",
   authCallbackUrl: oreIdCallbackUrl,
   signCallbackUrl: oreIdCallbackUrl,
@@ -72,6 +71,7 @@ const myOreIdOptions = {
     // @ts-ignore
     web3Provider(),
   ],
+  plugins: { popup: WebPopup() },
 };
 
 const useStyles = makeStyles((theme) => ({
@@ -97,10 +97,8 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function App() {
-  /** @type {[OreIdWebWidget, Dispatch<SetStateAction<OreIdWebWidget>>]} */
-  const [oreIdWebwidget, setOreIdWebwidget] = useState(null);
-  /** @type {[UserSourceData, Dispatch<SetStateAction<UserSourceData>>]} */
-  const [userInfo, setUserInfo] = useState(null);
+  /** @type {[OreId, import('react').Dispatch<import('react').SetStateAction<OreId>>]} */
+  const [oreId, setOreId] = useState(null);
   /** @type {[Logs, Dispatch<SetStateAction<Logs>>]} */
   const [logs, setLogs] = useState({});
   const [openSnackbar, setOpenSnackbar] = useState(false);
@@ -118,86 +116,63 @@ export default function App() {
   // Intialize oreId
   // IMPORTANT - For a production app, you must protect your api key. A create-react-app app will leak the key since it all runs in the browser.
   // To protect the key, you need to set-up a proxy server. See https://github.com/TeamAikon/ore-id-docs/tree/master/examples/react/advanced/react-server
-  const oreId = useMemo(() => {
+
+  const createMyOreId = async () => {
     const oreId = new OreId(myOreIdOptions);
+    await oreId.init();
     // inject oreId object into window for user accessibility
     // @ts-ignore
     window.oreId = oreId;
-    return oreId;
+    setOreId(oreId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }
 
   /** Call oreId.login() - this returns a redirect url which will launch the login flow (for the specified provider)
    When complete, the browser will be redirected to the authCallbackUrl (specified in oredId options) */
   const handleLogin = async (provider) => {
-    oreIdWebwidget.onAuth({
-      params: { provider },
-      onSuccess: (userInfo) => {
-        handleUserInfo(userInfo)
-        setLogs({ [Severity.Success]: "Logged In Successfully!" })
-      },
-      onError: error => {
-        setLogs({ [Severity.Error]: error.errors })
-      },
-    });
+    try {
+      await oreId.popup.auth({ provider });
+      handleUserInfo()
+      setLogs({ [Severity.Success]: "Logged In Successfully!" })
+    } catch(error) {
+      setLogs({ [Severity.Error]: error.errors })
+    }
   };
 
-  const handleUserInfo = (userInfo) => {
+  const handleUserInfo = useCallback(async () => {
+    if(!oreId) return
+    let userInfo
+    try {
+      if(oreId.accessToken) userInfo = oreId.auth.user.data;
+    } catch (error) {
+      await oreId.auth.user.getData();
+      userInfo = oreId?.auth.user.data;
+    }
     if (userInfo?.accountName) {
-      userInfo.permissions = oreId.auth.user._userSourceData.permissions
-      setUserInfo(Object.freeze(userInfo));
+      // userInfo.permissions = oreId.auth.user._userSourceData.permissions
+      // setUserInfo(Object.freeze(userInfo));
       setIsLoggedIn(true);
       // Save the provider to send in test flows
       setLoggedProvider(oreId.accessTokenHelper?.decodedAccessToken["https://oreid.aikon.com/provider"]);
       return;
     }
     setIsLoggedIn(false);
-    setUserInfo(null);
+    // @ts-ignore
     setLoggedProvider(null);
-  };
+  }, [oreId]);
 
   /** Remove user info from local storage */
   const handleLogout = () => {
-    oreIdWebwidget.onLogout({
-      onSuccess: () => {
-        oreId.logout();
-        handleUserInfo(null);
-        setLogs({ [Severity.Success]: "Logged Out Successfully!" });
-      },
-      onError: () => setLogs({ [Severity.Error]: "An error occured while trying to logout!" })
-    })
-  };
-
-  /** Load the user from local storage - user info is automatically saved to local storage by oreId.getUserInfoFromApi() */
-  const loadUserFromLocalStorage = async () => {
-    if (!oreId.accessToken) return;
-    await oreId.auth.user.getData()
-    const userInfo = oreId.auth.user.data;
-    handleUserInfo(userInfo);
-  };
-
-  /** Retrieve user info from ORE ID service - user info is automatically saved to local storage */
-  const loadUserFromApi = async () => {
-    await oreId.auth.user.getData();
-    handleUserInfo(oreId.auth.user.data);
-  };
-
-  const handleOreIdCallback = () => {
-    const urlPath = `${window.location.origin}${window.location.pathname}`;
-    if (urlPath === myOreIdOptions.authCallbackUrl) {
-      const { errors } = oreId.auth.handleAuthCallback(window.location.href);
-      if (!errors) {
-        window.location.replace("/");
-      } else {
-        setLogs({ [Severity.Error]: errors.join(" ") });
-      }
-    }
+    setIsLoggedIn(false);
+    oreId.logout()
+    setLogs({ [Severity.Success]: "Logged Out Successfully!" });
+    handleUserInfo();
   };
 
   const handleSignString = async ({ chainNetwork, walletType, onSuccess }) => {
     try {
       const { signedString } = await oreId.signStringWithWallet({
-        account: userInfo?.accountName,
+        account: oreId?.auth.user.accountName,
         walletType,
         chainNetwork,
         string: "Verify your Account",
@@ -205,7 +180,7 @@ export default function App() {
       });
       console.log({ signedString });
       setTimeout(() => {
-        loadUserFromApi();
+        handleUserInfo();
       }, 2000);
       if (signedString) {
         setLogs({ [Severity.Success]: "Account Added Successfully!" });
@@ -219,7 +194,7 @@ export default function App() {
 
   // compose params for action
   const composeWidgetOptionsForAction = async (action, args) => {
-    switch (action) {
+    try { switch (action) {
       case WebWidgetAction.Sign:
         if (!args?.chainAccountPermission || !args.transaction) {
           setLogs({
@@ -234,6 +209,7 @@ export default function App() {
           chainNetwork,
           transaction: args?.transaction,
           signOptions: {
+            provider: loggedProvider,
             allowChainAccountSelection: privateKeyStoredExterally,
             broadcast: true, // if broadcast=true, ore id will broadcast the transaction to the chain network for you
             returnSignedTransaction: false,
@@ -242,32 +218,25 @@ export default function App() {
         };
         const transaction = await oreId.createTransaction(transactionData)
         setWidgetAction(WebWidgetAction.Sign)
-        oreIdWebwidget.onSign({
-          transaction,
-          onSuccess: handleWidgetSuccess,
-          onError: handleWidgetError,
-        })
+        const signedTransaction = await oreId.popup.sign({ transaction })
+        handleWidgetSuccess(signedTransaction)
         break
       case WebWidgetAction.NewChainAccount:
         // compose params to create an additional blockchain account
         // IMPORTANT: newAccount is for creating an ADDITIONAL blockchain account for an existing ORE ID wallet - you normally would not need to do this
         setWidgetAction(WebWidgetAction.NewChainAccount)
-        oreIdWebwidget.onNewChainAccount({
-          params: { chainNetwork: args?.chainNetwork },
-          onSuccess: handleWidgetSuccess,
-          onError: handleWidgetError,
-        })
+        const newChainAccount = await oreId.popup.newChainAccount({ chainNetwork: args?.chainNetwork });
+        handleWidgetSuccess(newChainAccount)
         break
       case WebWidgetAction.RecoverAccount:
         setWidgetAction(WebWidgetAction.RecoverAccount)
-        oreIdWebwidget.onRecoverAccount({
-          params: {}, 
-          onSuccess: handleWidgetSuccess,
-          onError: handleWidgetError,
-        })
+        const response = await oreId.popup.recoverAccount({})
+        handleWidgetSuccess(response)
         break
       default:
         return null;
+    }} catch (error) {
+      handleWidgetError(error)
     }
   };
 
@@ -276,18 +245,13 @@ export default function App() {
     composeWidgetOptionsForAction(action, args);
   };
 
+  useEffect(() => {
+    handleUserInfo()
+  }, [oreId?.accessToken, handleUserInfo])
+
   /** Handle the authCallback coming back from ORE ID with an "account" parameter indicating that a user has logged in */
   useEffect(() => {
-    createOreIdWebWidget(oreId, window).then(oreIdWebwidget => {
-      setOreIdWebwidget(oreIdWebwidget)
-    })
-    // handles the auth callback url
-    loadUserFromLocalStorage().then(() => {
-      handleOreIdCallback();
-      // oreId.auth.user.getData().then(data => console.log({data}));
-      // Uncaught (in promise) TypeError: Cannot assign to read only property '_accountName' of object '#<User>'
-      !oreId.accessToken && setIsLoggedIn(false);
-    });
+    createMyOreId()
     try {
       // eslint-disable-next-line no-unused-expressions
       window.parent.document;
@@ -332,13 +296,14 @@ export default function App() {
       default:
         break;
     }
+    // @ts-ignore
     setWidgetAction(null);
   };
 
-  /** @type OnError */
   const handleWidgetError = (result) => {
     result?.data && console.error(result.data);
     setLogs({ [Severity.Error]: result?.errors || "An error occured" });
+    // @ts-ignore
     setWidgetAction(null);
   };
 
@@ -349,12 +314,12 @@ export default function App() {
           {isLoggedIn ? (
             <UserOreId
               appId={myOreIdOptions.appId}
-              oreIdAppUrl={oreIdUrl.app}
-              userInfo={userInfo}
+              oreIdAppUrl={oreIdUrl?.app}
+              userInfo={oreId.auth.user.data}
               onAction={handleAction}
               onConnectWallet={handleSignString}
               onLogout={handleLogout}
-              onRefresh={() => loadUserFromApi()}
+              onRefresh={() => handleUserInfo()}
             />
           ) : (
             <ButtonGroup className={styles.buttons}>
