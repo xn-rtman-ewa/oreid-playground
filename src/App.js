@@ -47,8 +47,8 @@ const oreIdCallbackUrl = `${window.location.origin}/oreidcallback`;
 
 // optional
 const oreIdUrl = {
-  app: "https://oreid.io",
-  auth: "https:/service.oreid.io",
+  app: "https://staging.oreid.io",
+  auth: "https:/staging.service.oreid.io",
 };
 
 /** @type import('oreid-js').OreIdOptions  */
