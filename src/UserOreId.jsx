@@ -193,7 +193,7 @@ const UserOreId = (props) => {
             label={appId}
             onClick={() => window.open(`${oreIdAppUrl || 'https://oreid.io'}/app/${appId}`, "_blank").focus()}
             color="primary"
-            avatar={<Avatar aria-label={name}>{name[0].toUpperCase()}</Avatar>}
+            avatar={<Avatar aria-label={name}>{name[0]?.toUpperCase()}</Avatar>}
             variant="outlined"
           />
         }
