@@ -193,7 +193,7 @@ const UserOreId = (props) => {
             label={appId}
             onClick={() => window.open(`${oreIdAppUrl || 'https://oreid.io'}/app/${appId}`, "_blank").focus()}
             color="primary"
-            avatar={<Avatar aria-label={name}>{name[0]?.toUpperCase()}</Avatar>}
+            avatar={<Avatar aria-label={name}>{name ? name[0].toUpperCase() : ''}</Avatar>}
             variant="outlined"
           />
         }
@@ -275,7 +275,7 @@ const UserOreId = (props) => {
               )}
               {dialogTitle === FormTitle.ChoosePermission && (
                 <form className={styles.form}>
-                  <FormControl color="primary" margin="dense" variant="outlined">
+                  <FormControl key="permission" color="primary" margin="dense" variant="outlined">
                     <InputLabel id="select-permission">Permission</InputLabel>
                     <Select
                       label="Permission"
@@ -303,7 +303,7 @@ const UserOreId = (props) => {
                     </Select>
                   </FormControl>
                   {selectedPermission !== null && (
-                    <FormControl color="primary" margin="dense" variant="outlined">
+                    <FormControl key="chain-address" color="primary" margin="dense" variant="outlined">
                       <TextField
                         margin="dense"
                         label="Chain Account Address"
@@ -313,7 +313,7 @@ const UserOreId = (props) => {
                       />
                     </FormControl>
                   )}
-                  <FormControl color="secondary" margin="dense" variant="outlined">
+                  <FormControl key="transaction" color="secondary" margin="dense" variant="outlined">
                     <TextField
                       multiline
                       label="Transaction"
@@ -324,7 +324,7 @@ const UserOreId = (props) => {
                       onChange={(e) => setTransaction(e.currentTarget.value)}
                     />
                   </FormControl>
-                  <FormControl margin="dense">
+                  <FormControl key="submit" margin="dense">
                     <Button variant="contained" color="primary" type="submit" disabled={selectedPermission === ""} onClick={handleSelectPermission}>
                       Sign with Permission
                     </Button>

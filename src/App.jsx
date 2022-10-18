@@ -1,19 +1,18 @@
 // @ts-check
 /* eslint-disable no-unused-vars */
-import React, { Dispatch, SetStateAction, useCallback, useState, useMemo, useEffect } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import "./styles.css";
 import {
   OreId,
   AuthProvider,
   LoginProvider,
-  TransactionData,
   WebWidgetAction,
  } from "oreid-js";
 import { WebPopup } from 'oreid-webpopup'
 import OreIdLoginButton from "oreid-login-button";
 import { makeStyles } from "@material-ui/core/styles";
 import { ButtonGroup, Snackbar } from "@material-ui/core";
-import { Alert, Color } from "@material-ui/lab";
+import { Alert } from "@material-ui/lab";
 import algoSignerProvider from "eos-transit-algosigner-provider";
 import keycatProvider from "eos-transit-keycat-provider";
 import ledgerProvider from "eos-transit-ledger-provider";
@@ -26,7 +25,7 @@ import tokenpocketProvider from "eos-transit-tokenpocket-provider";
 import web3Provider from "eos-transit-web3-provider";
 import UserOreId from "./UserOreId";
 
-/** @type {Object.<string, Color>} */
+/** @type {Object.<string, import('@material-ui/lab').Color>} */
 const Severity = {
   Info: "info",
   Warning: "warning",
@@ -35,28 +34,19 @@ const Severity = {
 };
 
 /**
- * @typedef {{
- *   warning?: string,
- *   error?: string,
- *   success?: string,
- *   info?: string,
- * }} Logs
+ * @typedef {{ [severity in Severity[keyof Severity]]?: string }} Logs
  */
-
-const oreIdCallbackUrl = `${window.location.origin}/oreidcallback`;
 
 // optional
 const oreIdUrl = {
-  app: "https://staging.oreid.io",
-  auth: "https://staging.service.oreid.io",
+  app: "https://oreid.io",
+  auth: "https://service.oreid.io",
 };
 
 /** @type import('oreid-js').OreIdOptions  */
 const myOreIdOptions = {
   oreIdUrl: oreIdUrl?.auth,
   appId: "demo_0097ed83e0a54e679ca46d082ee0e33a",
-  authCallbackUrl: oreIdCallbackUrl,
-  signCallbackUrl: oreIdCallbackUrl,
   eosTransitWalletProviders: [
     // @ts-ignore
     algoSignerProvider(),
@@ -93,22 +83,30 @@ const useStyles = makeStyles((theme) => ({
     "& button:hover": {
       cursor: "pointer",
     },
+    '& > div': {
+      margin: "auto !important",
+    }
   },
 }));
 
 export default function App() {
-  /** @type {[OreId, import('react').Dispatch<import('react').SetStateAction<OreId>>]} */
-  const [oreId, setOreId] = useState(null);
-  /** @type {[Logs, Dispatch<SetStateAction<Logs>>]} */
-  const [logs, setLogs] = useState({});
   const [openSnackbar, setOpenSnackbar] = useState(false);
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
-  const [isLoggedIn, setIsLoggedIn] = useState(null);
-  /** @type {[WebWidgetAction, Dispatch<SetStateAction<WebWidgetAction>>]} */
+  /** @type {[Logs, import('react').Dispatch<import('react').SetStateAction<Logs>>]} */
+  const [logs, setLogs] = useState({});
+  /** @type {[OreId, import('react').Dispatch<import('react').SetStateAction<OreId>>]} */
+  // @ts-ignore
+  const [oreId, setOreId] = useState(null);
+  /** @type {[boolean, import('react').Dispatch<import('react').SetStateAction<boolean>>]} */
+  // @ts-ignore
+    const [isLoggedIn, setIsLoggedIn] = useState(null);
+  /** @type {[WebWidgetAction, import('react').Dispatch<import('react').SetStateAction<WebWidgetAction>>]} */
+  // @ts-ignore
   const [widgetAction, setWidgetAction] = useState(null);
-  /** @type {[AuthProvider, Dispatch<SetStateAction<AuthProvider>>]} */
+  /** @type {[AuthProvider, import('react').Dispatch<import('react').SetStateAction<AuthProvider>>]} */
+  // @ts-ignore
   const [loggedProvider, setLoggedProvider] = useState(null);
-  /** @type {[Color, Dispatch<SetStateAction<Color>>]} */
+  /** @type {[import('@material-ui/lab').Color, import('react').Dispatch<import('react').SetStateAction<import('@material-ui/lab').Color>>]} */
+  // @ts-ignore
   const [severity, setSeverity] = useState(null);
 
   const styles = useStyles();
@@ -149,10 +147,8 @@ export default function App() {
       userInfo = oreId?.auth.user.data;
     }
     if (userInfo?.accountName) {
-      // userInfo.permissions = oreId.auth.user._userSourceData.permissions
-      // setUserInfo(Object.freeze(userInfo));
       setIsLoggedIn(true);
-      // Save the provider to send in test flows
+      // Save the provider from accessToken claim
       setLoggedProvider(oreId.accessTokenHelper?.decodedAccessToken["https://oreid.aikon.com/provider"]);
       return;
     }
@@ -203,7 +199,7 @@ export default function App() {
           return;
         }
         const { chainAccount, chainNetwork, privateKeyStoredExterally } = args.chainAccountPermission;
-        /** @type TransactionData */
+        /** @type import('oreid-js').TransactionData */
         const transactionData = {
           chainAccount,
           chainNetwork,
